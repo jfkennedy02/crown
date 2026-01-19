@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Panel - Crown Heights Academy">
+    <title>Admin Panel | Crown Heights Academy</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .admin-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .login-form,
+        .admin-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .admin-panel {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .articles-list {
+            margin-top: 40px;
+        }
+
+        .article-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-light);
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .article-item h4 {
+            margin: 0 0 5px;
+            color: var(--text-dark);
+        }
+
+        .article-item span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .article-item .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .article-item .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 2px solid var(--primary-purple);
+            color: var(--primary-purple);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: var(--primary-purple);
+            color: white;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .no-articles {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" style="background: var(--dark-purple);">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Crown Heights Academy" style="height: 45px; margin-right: 10px;">
+                Crown Heights
+            </a>
+            <div class="menu-toggle"><i class="fa-solid fa-bars"></i></div>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About Us</a></li>
+                <li><a href="academics.html" class="nav-link">Academics</a></li>
+                <li><a href="admissions.html" class="nav-link">Admissions</a></li>
+                <li><a href="news.html" class="nav-link">News & Events</a></li>
+                <li><a href="gallery.html" class="nav-link">Gallery</a></li>
+                <li><a href="contact.html" class="btn btn-secondary text-dark">Contact Us</a></li>
+                <li><button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="section-padding text-center" style="background: var(--light-purple); padding-top: 150px;">
+        <div class="container">
+            <span class="text-purple" style="font-weight: 600; text-transform: uppercase;">Secure Access</span>
+            <h1 style="font-size: 2.8rem; margin-top: 10px; color: var(--text-dark);">Admin Panel</h1>
+        </div>
+    </header>
+
+    <!-- Admin Section -->
+    <section class="section-padding">
+        <div class="container admin-container">
+            <!-- Login Form -->
+            <div class="login-form" id="login-form">
+                <h2 style="margin-bottom: 25px; color: var(--dark-purple);">
+                    <i class="fa-solid fa-lock text-purple"></i> Admin Login
+                </h2>
+                <div class="form-group">
+                    <label for="admin-password">Password</label>
+                    <input type="password" id="admin-password" placeholder="Enter admin password">
+                </div>
+                <p class="error-message" id="login-error">Incorrect password. Please try again.</p>
+                <button class="btn btn-primary" id="login-btn" style="width: 100%;">
+                    <i class="fa-solid fa-sign-in-alt"></i> Login
+                </button>
+            </div>
+
+            <!-- Admin Panel (shown after login) -->
+            <div class="admin-panel" id="admin-panel">
+                <div class="admin-header">
+                    <h2 style="margin: 0; color: var(--dark-purple);">
+                        <i class="fa-solid fa-newspaper text-purple"></i> Manage Articles
+                    </h2>
+                    <button class="logout-btn" id="logout-btn">
+                        <i class="fa-solid fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+
+                <!-- Add New Article Form -->
+                <div style="background: var(--bg-light); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+                    <h3 style="margin: 0 0 20px; color: var(--dark-purple);">Add New Article</h3>
+                    <form id="article-form">
+                        <div class="form-group">
+                            <label for="article-title">Title *</label>
+                            <input type="text" id="article-title" placeholder="Enter article title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="article-date">Date *</label>
+                            <input type="date" id="article-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="article-summary">Summary *</label>
+                            <textarea id="article-summary"
+                                placeholder="Brief summary of the article (shown in preview cards)" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="article-content">Full Content *</label>
+                            <textarea id="article-content" placeholder="Full article content (supports basic HTML)"
+                                required style="min-height: 200px;"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="article-image">Image URL (optional)</label>
+                            <input type="url" id="article-image" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <p class="success-message" id="article-success">Article added successfully!</p>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <i class="fa-solid fa-plus"></i> Add Article
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Existing Articles -->
+                <div class="articles-list">
+                    <h3 style="margin: 0 0 20px; color: var(--dark-purple);">Existing Articles</h3>
+                    <div id="articles-container">
+                        <div class="no-articles">
+                            <i class="fa-solid fa-folder-open"
+                                style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                            <p>No custom articles yet. Add your first article above!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="background: var(--text-dark); color: white; padding-top: 50px; padding-bottom: 30px;">
+        <div class="container text-center">
+            <a href="admin.html"><img src="images/logo.png" alt="Crown Heights Academy" style="height: 80px; margin-bottom: 15px;"></a>
+            <h3 style="color: var(--primary-yellow); margin-bottom: 10px;">Crown Heights Academy</h3>
+            <p style="color: #aaa;">&copy; 2026. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>

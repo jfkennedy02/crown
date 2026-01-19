@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Article - Crown Heights Academy">
+    <title>Article | Crown Heights Academy</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" style="background: var(--dark-purple);">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Crown Heights Academy" style="height: 45px; margin-right: 10px;">
+                Crown Heights
+            </a>
+            <div class="menu-toggle"><i class="fa-solid fa-bars"></i></div>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About Us</a></li>
+                <li><a href="academics.html" class="nav-link">Academics</a></li>
+                <li><a href="admissions.html" class="nav-link">Admissions</a></li>
+                <li><a href="news.html" class="nav-link" style="color: var(--primary-yellow);">News & Events</a></li>
+                <li><a href="gallery.html" class="nav-link">Gallery</a></li>
+                <li><a href="contact.html" class="btn btn-secondary text-dark">Contact Us</a></li>
+                <li><button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Article Content Container -->
+    <div id="article-container">
+        <!-- Loading state -->
+        <header class="section-padding text-center" style="background: var(--light-purple); padding-top: 150px;">
+            <div class="container">
+                <span class="text-purple" style="font-weight: 600; text-transform: uppercase;">Loading...</span>
+                <h1 id="article-title" style="font-size: 2.8rem; margin-top: 10px; color: var(--text-dark);">Article
+                </h1>
+            </div>
+        </header>
+
+        <article class="section-padding">
+            <div class="container" style="max-width: 800px;">
+                <div id="article-image-container"></div>
+                <div id="article-content" class="article-content" style="line-height: 1.9; font-size: 1.1rem;">
+                    <p class="text-muted">Loading article content...</p>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 15px; flex-wrap: wrap;">
+                    <a href="news.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Back to News</a>
+                    <a href="contact.html" class="btn btn-secondary">Contact Us</a>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <!-- Not Found State -->
+    <div id="not-found" style="display: none;">
+        <section class="section-padding text-center" style="padding-top: 200px; padding-bottom: 200px;">
+            <div class="container">
+                <i class="fa-solid fa-file-circle-exclamation text-purple"
+                    style="font-size: 5rem; margin-bottom: 30px; opacity: 0.5;"></i>
+                <h1 style="color: var(--dark-purple); margin-bottom: 15px;">Article Not Found</h1>
+                <p class="text-muted" style="margin-bottom: 30px;">The article you're looking for doesn't exist or has
+                    been removed.</p>
+                <a href="news.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Back to News</a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer style="background: var(--text-dark); color: white; padding-top: 50px; padding-bottom: 30px;">
+        <div class="container text-center">
+            <a href="admin.html"><img src="images/logo.png" alt="Crown Heights Academy" style="height: 80px; margin-bottom: 15px;"></a>
+            <h3 style="color: var(--primary-yellow); margin-bottom: 10px;">Crown Heights Academy</h3>
+            <p style="color: #aaa;">&copy; 2026. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleId = urlParams.get('id');
+
+            const articleContainer = document.getElementById('article-container');
+            const notFound = document.getElementById('not-found');
+            const titleEl = document.getElementById('article-title');
+            const contentEl = document.getElementById('article-content');
+            const imageContainer = document.getElementById('article-image-container');
+
+            if (!articleId || !window.crownheightsArticles) {
+                showNotFound();
+                return;
+            }
+
+            const articles = window.crownheightsArticles.getAll();
+            const article = articles.find(a => a.id === articleId);
+
+            if (!article) {
+                showNotFound();
+                return;
+            }
+
+            // Update page title
+            document.title = `${article.title} | Crown Heights Academy`;
+            document.querySelector('meta[name="description"]').content = article.summary;
+
+            // Update header
+            document.querySelector('header span').textContent = window.crownheightsArticles.formatDate(article.date);
+            titleEl.textContent = article.title;
+
+            // Show image if exists
+            if (article.image) {
+                imageContainer.innerHTML = `<img src="${article.image}" alt="${article.title}" style="width: 100%; border-radius: 20px; margin-bottom: 40px; box-shadow: var(--shadow-lg);">`;
+            }
+
+            // Show content
+            contentEl.innerHTML = `
+                <p class="text-muted" style="font-size: 1.25rem; margin-bottom: 30px;">${article.summary}</p>
+                <div style="margin-top: 30px;">${article.content}</div>
+            `;
+
+            function showNotFound() {
+                articleContainer.style.display = 'none';
+                notFound.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+
+</html>

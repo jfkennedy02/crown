@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="About Crown Heights Academy - Our History, Mission, and Team.">
+    <title>About Us | Crown Heights Academy</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar" style="background: var(--dark-purple);">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Crown Heights Academy" style="height: 45px; margin-right: 10px;">
+                Crown Heights
+            </a>
+
+            <div class="menu-toggle">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link" style="color: var(--primary-yellow);">About Us</a></li>
+                <li><a href="academics.html" class="nav-link">Academics</a></li>
+                <li><a href="admissions.html" class="nav-link">Admissions</a></li>
+                <li><a href="news.html" class="nav-link">News & Events</a></li>
+                <li><a href="gallery.html" class="nav-link">Gallery</a></li>
+                <li><a href="contact.html" class="btn btn-secondary text-dark">Contact Us</a></li>
+                <li><button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="section-padding text-center"
+        style="background: linear-gradient(rgba(75, 0, 130, 0.8), rgba(75, 0, 130, 0.8)), url('images/maze.gif'); background-size: cover; background-position: center; padding-top: 150px; color: white;">
+        <div class="container">
+            <span class="text-yellow" style="font-weight: 600; text-transform: uppercase;">Who We Are</span>
+            <h1 style="font-size: 3rem; margin-top: 10px; color: white;">Our Story & Mission</h1>
+        </div>
+    </header>
+
+    <!-- Mission & Vision -->
+    <section class="section-padding"
+        style="background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('images/maze.gif'); background-size: cover; background-attachment: fixed; background-position: center;">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 50px;">
+                <div class="glass-card">
+                    <i class="fa-solid fa-rocket text-yellow" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                    <h2>Our Mission</h2>
+                    <p class="text-muted">To provide a stimulating learning environment where every child is encouraged
+                        to explore, create, and excel, fostering a lifelong love for learning.</p>
+                </div>
+                <div class="glass-card">
+                    <i class="fa-solid fa-eye text-purple" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                    <h2>Our Vision</h2>
+                    <p class="text-muted">To be the leading nursery and primary institution in Rivers State, known for
+                        raising confident, compassionate, and competent future leaders.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- History Timeline -->
+    <section class="section-padding"
+        style="background: linear-gradient(rgba(245, 240, 255, 0.95), rgba(245, 240, 255, 0.95)), url('images/maze.gif'); background-size: cover; background-position: center; background-attachment: fixed;">
+        <div class="container">
+            <h2 class="text-center" style="margin-bottom: 50px;">Our Journey</h2>
+            <div class="timeline">
+                <div class="timeline-item timeline-left animate-hidden">
+                    <div class="timeline-content">
+                        <span class="text-purple" style="font-weight: 800;">2010</span>
+                        <h3>Inception</h3>
+                        <p>Crown Heights Academy was founded with just 15 pupils and a vision to transform education in
+                            Woji.</p>
+                    </div>
+                </div>
+                <div class="timeline-item timeline-right animate-hidden">
+                    <div class="timeline-content">
+                        <span class="text-purple" style="font-weight: 800;">2015</span>
+                        <h3>Expansion</h3>
+                        <p>We expanded our facilities to include a modern science lab, library, and art studio, growing
+                            to 200+ pupils.</p>
+                    </div>
+                </div>
+                <div class="timeline-item timeline-left animate-hidden">
+                    <div class="timeline-content">
+                        <span class="text-purple" style="font-weight: 800;">2020</span>
+                        <h3>Digital Leap</h3>
+                        <p>Introduced ICT-enhanced learning and coding classes for primary admission, setting a new
+                            standard.</p>
+                    </div>
+                </div>
+                <div class="timeline-item timeline-right animate-hidden">
+                    <div class="timeline-content">
+                        <span class="text-purple" style="font-weight: 800;">2026</span>
+                        <h3>Today</h3>
+                        <p>Recognized as a center of excellence with award-winning students and a vibrant community.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="section-padding" style="background: var(--bg-off-white);">
+        <div class="container">
+            <div class="text-center" style="margin-bottom: 50px;">
+                <span class="text-yellow" style="font-weight: 600;">Dedicated Educators</span>
+                <h2>Meet Our Teachers</h2>
+            </div>
+
+            <div class="teachers-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                <!-- Teacher 1 -->
+                <div class="animate-on-scroll">
+                    <div class="glass-card text-center float-teacher-1" style="padding: 0; overflow: hidden;">
+                        <img src="images/teacher-male.png" alt="Mr. Okonkwo"
+                            style="width: 100%; height: 300px; object-fit: cover;">
+                        <div style="padding: 20px;">
+                            <h3>Mr. Okonkwo</h3>
+                            <p class="text-purple">Head of Sciences</p>
+                            <p class="text-muted" style="font-size: 0.9rem;">"Science is magic that works."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher 2 -->
+                <div class="animate-on-scroll" style="transition-delay: 0.2s;">
+                    <div class="glass-card text-center float-teacher-2" style="padding: 0; overflow: hidden;">
+                        <img src="images/mrs-davis.jpg" alt="Mrs. Davis"
+                            style="width: 100%; height: 300px; object-fit: cover;">
+                        <div style="padding: 20px;">
+                            <h3>Mrs. Davis</h3>
+                            <p class="text-purple">Nursery Head</p>
+                            <p class="text-muted" style="font-size: 0.9rem;">"Nurturing the roots for strong trees."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher 3 -->
+                <div class="animate-on-scroll" style="transition-delay: 0.4s;">
+                    <div class="glass-card text-center float-teacher-3" style="padding: 0; overflow: hidden;">
+                        <img src="images/ms-ibrahim.jpg" alt="Ms. Ibrahim"
+                            style="width: 100%; height: 300px; object-fit: cover;">
+                        <div style="padding: 20px;">
+                            <h3>Ms. Ibrahim</h3>
+                            <p class="text-purple">Art & Culture</p>
+                            <p class="text-muted" style="font-size: 0.9rem;">"Creativity is intelligence having fun."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="background: var(--text-dark); color: white; padding-top: 80px;">
+        <div class="container" style="padding-bottom: 50px;">
+            <!-- Simple Footer Reuse -->
+            <div class="text-center">
+                <a href="admin.html"><img src="images/logo.png" alt="Crown Heights Academy"
+                        style="height: 80px; margin-bottom: 15px;"></a>
+                <h3 style="color: var(--primary-yellow); margin-bottom: 10px;">Crown Heights Academy</h3>
+                <p style="color: #aaa;">&copy; 2026. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
