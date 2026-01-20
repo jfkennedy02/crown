@@ -255,6 +255,23 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, update
         articleForm.addEventListener('submit', handleAddArticle);
         if (cancelEditBtn) cancelEditBtn.addEventListener('click', handleCancelEdit);
 
+        // Test connection button (helpful for debugging)
+        const testBtn = document.createElement('button');
+        testBtn.innerHTML = '<i class="fa-solid fa-plug"></i> Test Connection';
+        testBtn.style = "background: #6c757d; color: white; border: none; padding: 5px 15px; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 0.8rem;";
+        testBtn.onclick = async () => {
+            try {
+                console.log("Testing connection...");
+                const q = query(collection(db, "articles"), orderBy("date", "desc"), 1);
+                await getDocs(q);
+                alert("Connection successful! Database is responding.");
+            } catch (e) {
+                console.error("Connection test failed", e);
+                alert("Connection failed: " + e.message);
+            }
+        };
+        adminPanel.querySelector('.admin-header').appendChild(testBtn);
+
         async function handleLogin() {
             const password = passwordInput.value.trim();
             if (password === ADMIN_PASSWORD) {
@@ -283,12 +300,24 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, update
 
         async function handleAddArticle(e) {
             e.preventDefault();
+            console.log("Submit button clicked!");
 
-            const title = document.getElementById('article-title').value.trim();
-            const date = document.getElementById('article-date').value;
-            const summary = document.getElementById('article-summary').value.trim();
-            const content = document.getElementById('article-content').value.trim();
-            const image = document.getElementById('article-image').value.trim();
+            const titleEl = document.getElementById('article-title');
+            const dateEl = document.getElementById('article-date');
+            const summaryEl = document.getElementById('article-summary');
+            const contentEl = document.getElementById('article-content');
+            const imageEl = document.getElementById('article-image');
+
+            if (!titleEl || !dateEl || !summaryEl || !contentEl) {
+                console.error("Form elements not found!");
+                return;
+            }
+
+            const title = titleEl.value.trim();
+            const date = dateEl.value;
+            const summary = summaryEl.value.trim();
+            const content = contentEl.value.trim();
+            const image = imageEl ? imageEl.value.trim() : "";
 
             if (!title || !date || !summary || !content) {
                 alert('Please fill in all required fields.');

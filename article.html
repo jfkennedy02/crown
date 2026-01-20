@@ -82,16 +82,19 @@
     <!-- Footer -->
     <footer style="background: var(--text-dark); color: white; padding-top: 50px; padding-bottom: 30px;">
         <div class="container text-center">
-            <a href="admin.html"><img src="images/logo.png" alt="Crown Heights Academy" style="height: 80px; margin-bottom: 15px;"></a>
+            <a href="admin.html"><img src="images/logo.png" alt="Crown Heights Academy"
+                    style="height: 80px; margin-bottom: 15px;"></a>
             <h3 style="color: var(--primary-yellow); margin-bottom: 10px;">Crown Heights Academy</h3>
             <p style="color: #aaa;">&copy; 2026. All Rights Reserved.</p>
         </div>
     </footer>
 
     <script src="js/main.js"></script>
-    <script src="js/admin.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
+    <script type="module" src="js/admin.js"></script>
+    <script type="module">
+        import { db, doc, getDoc } from './js/firebase-config.js';
+
+        document.addEventListener('DOMContentLoaded', async function () {
             const urlParams = new URLSearchParams(window.location.search);
             const articleId = urlParams.get('id');
 
@@ -101,13 +104,28 @@
             const contentEl = document.getElementById('article-content');
             const imageContainer = document.getElementById('article-image-container');
 
-            if (!articleId || !window.crownheightsArticles) {
+            if (!articleId) {
                 showNotFound();
                 return;
             }
 
-            const articles = window.crownheightsArticles.getAll();
-            const article = articles.find(a => a.id === articleId);
+            let article = null;
+
+            // 1. Try Firebase first
+            try {
+                const docSnap = await getDoc(doc(db, "articles", articleId));
+                if (docSnap.exists()) {
+                    article = { id: docSnap.id, ...docSnap.data() };
+                }
+            } catch (e) {
+                console.warn("Firebase fetch failed, trying local storage", e);
+            }
+
+            // 2. Fallback to Local Storage if not found in Firebase (or Firebase failed)
+            if (!article && window.crownheightsArticles) {
+                const articles = await window.crownheightsArticles.getAll();
+                article = articles.find(a => a.id === articleId);
+            }
 
             if (!article) {
                 showNotFound();
@@ -116,26 +134,29 @@
 
             // Update page title
             document.title = `${article.title} | Crown Heights Academy`;
-            document.querySelector('meta[name="description"]').content = article.summary;
+            if (document.querySelector('meta[name="description"]')) {
+                document.querySelector('meta[name="description"]').content = article.summary;
+            }
 
             // Update header
-            document.querySelector('header span').textContent = window.crownheightsArticles.formatDate(article.date);
+            const dateStr = window.crownheightsArticles ? window.crownheightsArticles.formatDate(article.date) : article.date;
+            document.querySelector('header span').textContent = dateStr;
             titleEl.textContent = article.title;
 
             // Show image if exists
             if (article.image) {
-                imageContainer.innerHTML = `<img src="${article.image}" alt="${article.title}" style="width: 100%; border-radius: 20px; margin-bottom: 40px; box-shadow: var(--shadow-lg);">`;
+                imageContainer.innerHTML = `<img src="${article.image}" alt="${article.title}" style="width: 100%; border-radius: 20px; margin-bottom: 40px; box-shadow: var(--shadow-lg); object-fit: cover; max-height: 500px;">`;
             }
 
             // Show content
             contentEl.innerHTML = `
-                <p class="text-muted" style="font-size: 1.25rem; margin-bottom: 30px;">${article.summary}</p>
-                <div style="margin-top: 30px;">${article.content}</div>
+                <p class="text-muted" style="font-size: 1.25rem; margin-bottom: 30px; font-weight: 500; border-left: 4px solid var(--primary-yellow); padding-left: 20px;">${article.summary}</p>
+                <div style="margin-top: 30px; white-space: pre-line;">${article.content}</div>
             `;
 
             function showNotFound() {
-                articleContainer.style.display = 'none';
-                notFound.style.display = 'block';
+                if (articleContainer) articleContainer.style.display = 'none';
+                if (notFound) notFound.style.display = 'block';
             }
         });
     </script>
