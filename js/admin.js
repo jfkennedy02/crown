@@ -101,17 +101,26 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, update
             } else {
                 await addDoc(collection(db, "articles"), article);
             }
+            return true;
         } catch (e) {
             console.error("Firebase article save/update failed", e);
-            // Local fallback logic simplified for brevity - in real app would handle update/create separately
-            const articles = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-            if (editingArticleId) {
-                const idx = articles.findIndex(a => a.id === editingArticleId);
-                if (idx !== -1) articles[idx] = { ...article, id: editingArticleId };
-            } else {
-                articles.unshift({ ...article, id: Date.now().toString() });
+            alert("Firebase Error: " + e.message + "\n\nPlease check if your Firestore Rules are set to 'allow read, write: if true;'.");
+
+            // Local fallback
+            try {
+                const articles = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+                if (editingArticleId) {
+                    const idx = articles.findIndex(a => a.id === editingArticleId);
+                    if (idx !== -1) articles[idx] = { ...article, id: editingArticleId };
+                } else {
+                    articles.unshift({ ...article, id: Date.now().toString() });
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
+                return true;
+            } catch (localErr) {
+                console.error("Storage fallback failed", localErr);
+                return false;
             }
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
         }
     }
 
@@ -286,32 +295,48 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, update
                 return;
             }
 
-            const article = {
-                title,
-                date,
-                summary,
-                content,
-                image: image || null,
-                updatedAt: new Date().toISOString()
-            };
+            const submitBtn = articleForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
 
-            if (!editingArticleId) {
-                article.createdAt = new Date().toISOString();
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+                const article = {
+                    title,
+                    date,
+                    summary,
+                    content,
+                    image: image || null,
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (!editingArticleId) {
+                    article.createdAt = new Date().toISOString();
+                }
+
+                const success = await saveArticle(article);
+
+                if (success) {
+                    articleForm.reset();
+                    const isEditing = !!editingArticleId;
+                    handleCancelEdit(); // Reset edit state
+
+                    articleSuccess.textContent = isEditing ? 'Article updated successfully!' : 'Article added successfully!';
+                    articleSuccess.style.display = 'block';
+                    setTimeout(() => {
+                        articleSuccess.style.display = 'none';
+                    }, 3000);
+
+                    await renderArticles();
+                }
+            } catch (err) {
+                console.error("Submission error", err);
+                alert("An unexpected error occurred: " + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
-
-            await saveArticle(article);
-
-            articleForm.reset();
-            const isEditing = !!editingArticleId;
-            handleCancelEdit(); // Reset edit state
-
-            articleSuccess.textContent = isEditing ? 'Article updated successfully!' : 'Article added successfully!';
-            articleSuccess.style.display = 'block';
-            setTimeout(() => {
-                articleSuccess.style.display = 'none';
-            }, 3000);
-
-            await renderArticles();
         }
 
         async function handleEditArticle(id) {
