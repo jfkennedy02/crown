@@ -241,8 +241,18 @@
                                 required style="min-height: 200px;"></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="article-image">Image URL (optional)</label>
-                            <input type="url" id="article-image" placeholder="https://example.com/image.jpg">
+                            <label for="article-image">Image URL or Upload Image</label>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <input type="text" id="article-image" placeholder="https://example.com/image.jpg"
+                                    style="flex: 1; min-width: 250px;">
+                                <button type="button" id="article-image-upload-btn" class="btn btn-secondary"
+                                    style="padding: 10px 15px;">
+                                    <i class="fa-solid fa-upload"></i> Upload
+                                </button>
+                                <input type="file" id="article-image-file" style="display: none;" accept="image/*">
+                            </div>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">You can paste any
+                                image link or upload a file directly.</p>
                         </div>
                         <p class="success-message" id="article-success">Article added successfully!</p>
                         <button type="submit" class="btn btn-primary" style="width: 100%;">

@@ -213,7 +213,8 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, update
                 } else if (password !== null) {
                     alert("Incorrect password!");
                 }
-            }
+            },
+            refresh: renderGallery // Expose refresh function
         };
     }
 
@@ -254,6 +255,34 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, update
         logoutBtn.addEventListener('click', handleLogout);
         articleForm.addEventListener('submit', handleAddArticle);
         if (cancelEditBtn) cancelEditBtn.addEventListener('click', handleCancelEdit);
+
+        // Article Image Upload Logic
+        const articleImageUploadBtn = document.getElementById('article-image-upload-btn');
+        const articleImageFile = document.getElementById('article-image-file');
+        const articleImageInput = document.getElementById('article-image');
+
+        if (articleImageUploadBtn && articleImageFile && articleImageInput) {
+            articleImageUploadBtn.addEventListener('click', () => {
+                articleImageFile.click();
+            });
+
+            articleImageFile.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (file.size > 1 * 1024 * 1024) {
+                    alert("File is too large! Please use images smaller than 1MB.");
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    articleImageInput.value = event.target.result;
+                    console.log("Image data loaded to input");
+                };
+                reader.readAsDataURL(file);
+            });
+        }
 
         // Test connection button (helpful for debugging)
         const testBtn = document.createElement('button');
@@ -347,6 +376,38 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, update
                 const success = await saveArticle(article);
 
                 if (success) {
+                    // Sync image to gallery if it exists
+                    if (article.image) {
+                        try {
+                            const gallery = await getGallery();
+                            // Simple check to avoid duplicates (comparing first 100 chars if it's base64, or whole URL)
+                            const isDuplicate = gallery.some(img => {
+                                if (img.src === article.image) return true;
+                                if (article.image.startsWith('data:') && img.src.startsWith('data:')) {
+                                    return img.src.substring(0, 100) === article.image.substring(0, 100);
+                                }
+                                return false;
+                            });
+
+                            if (!isDuplicate) {
+                                console.log("Syncing image to gallery...");
+                                await saveGalleryImage(article.image);
+                                // Refresh gallery view if on admin page
+                                const galleryContainer = document.getElementById('dynamic-gallery');
+                                if (galleryContainer) {
+                                    // Normally renderGallery is private inside initGalleryAdmin, 
+                                    // but we can trigger a refresh by calling init again or making it accessible
+                                    // For now, it will show up on next page load or we can refresh manually
+                                    // If we are on the admin page, we should probably just trigger an update
+                                    const initGallery = window.crownheightsGallery?.refresh;
+                                    if (typeof initGallery === 'function') await initGallery();
+                                }
+                            }
+                        } catch (galleryErr) {
+                            console.warn("Failed to sync image to gallery", galleryErr);
+                        }
+                    }
+
                     articleForm.reset();
                     const isEditing = !!editingArticleId;
                     handleCancelEdit(); // Reset edit state
