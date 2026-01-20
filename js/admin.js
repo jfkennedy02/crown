@@ -163,9 +163,16 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, update
         await renderGallery();
 
         trigger.addEventListener('click', () => {
+            // If already logged in this session, skip prompt
+            if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+                fileInput.click();
+                return;
+            }
+
             const password = prompt("Admin access required. Please enter password:");
             if (password === ADMIN_PASSWORD) {
-                fileInput.click();
+                sessionStorage.setItem(SESSION_KEY, 'true');
+                alert("Access granted! Click the camera icon again to upload.");
             } else if (password !== null) {
                 alert("Incorrect password!");
             }

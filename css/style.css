@@ -479,7 +479,6 @@ ul {
     /* Horizontal Scroll Snap for Events/Cards (App-like feel) */
     .events-grid,
     .news-grid,
-    .gallery-grid,
     .teachers-grid {
         display: flex !important;
         overflow-x: auto;
@@ -851,8 +850,32 @@ ul {
     border-radius: 15px;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
+    box-shadow: var(--shadow-sm);
+    animation: galleryFloat 6s ease-in-out infinite;
+}
+
+.gallery-item:nth-child(even) {
+    animation-duration: 8s;
+    animation-delay: 0.5s;
+}
+
+.gallery-item:nth-child(3n) {
+    animation-duration: 7s;
+    animation-delay: 1.2s;
+}
+
+@keyframes galleryFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
 }
 
 .gallery-item img {
@@ -862,7 +885,9 @@ ul {
 }
 
 .gallery-item:hover {
-    transform: scale(1.02);
+    transform: scale(1.03) translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    animation-play-state: paused;
 }
 
 .gallery-overlay {
