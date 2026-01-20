@@ -6,10 +6,9 @@
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration
-// FOR USER: Replace these values once you have your Firebase project set up!
 const firebaseConfig = {
     apiKey: "AIzaSyDzimCdc6EQDeR1QS6Q_lfrdMmmT_pBJ04",
     authDomain: "crown-academy-82fd7.firebaseapp.com",
@@ -24,4 +23,4 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Export for use in other files
-export { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy };
+export { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, updateDoc, getDoc };

@@ -4,7 +4,7 @@
  * Fallback to localStorage provided for offline development
  */
 
-import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from './firebase-config.js';
+import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, updateDoc, getDoc } from './firebase-config.js';
 
 (function () {
     'use strict';
@@ -14,6 +14,9 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 
     const STORAGE_KEY = 'crownheights_articles';
     const GALLERY_KEY = 'crownheights_gallery';
     const SESSION_KEY = 'crownheights_admin_session';
+
+    // State
+    let editingArticleId = null;
 
     // --- Firebase / Storage Helper functions ---
 
@@ -93,11 +96,21 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 
 
     async function saveArticle(article) {
         try {
-            await addDoc(collection(db, "articles"), article);
+            if (editingArticleId) {
+                await updateDoc(doc(db, "articles", editingArticleId), article);
+            } else {
+                await addDoc(collection(db, "articles"), article);
+            }
         } catch (e) {
-            console.error("Firebase article save failed", e);
+            console.error("Firebase article save/update failed", e);
+            // Local fallback logic simplified for brevity - in real app would handle update/create separately
             const articles = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-            articles.unshift({ ...article, id: Date.now().toString() });
+            if (editingArticleId) {
+                const idx = articles.findIndex(a => a.id === editingArticleId);
+                if (idx !== -1) articles[idx] = { ...article, id: editingArticleId };
+            } else {
+                articles.unshift({ ...article, id: Date.now().toString() });
+            }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
         }
     }
@@ -218,6 +231,8 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 
         const articleForm = document.getElementById('article-form');
         const articleSuccess = document.getElementById('article-success');
         const articlesContainer = document.getElementById('articles-container');
+        const formTitle = document.getElementById('form-title');
+        const cancelEditBtn = document.getElementById('cancel-edit');
 
         if (sessionStorage.getItem(SESSION_KEY) === 'true') {
             showAdminPanel();
@@ -229,6 +244,7 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 
         });
         logoutBtn.addEventListener('click', handleLogout);
         articleForm.addEventListener('submit', handleAddArticle);
+        if (cancelEditBtn) cancelEditBtn.addEventListener('click', handleCancelEdit);
 
         async function handleLogin() {
             const password = passwordInput.value.trim();
@@ -276,12 +292,20 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 
                 summary,
                 content,
                 image: image || null,
-                createdAt: new Date().toISOString()
+                updatedAt: new Date().toISOString()
             };
+
+            if (!editingArticleId) {
+                article.createdAt = new Date().toISOString();
+            }
 
             await saveArticle(article);
 
             articleForm.reset();
+            const isEditing = !!editingArticleId;
+            handleCancelEdit(); // Reset edit state
+
+            articleSuccess.textContent = isEditing ? 'Article updated successfully!' : 'Article added successfully!';
             articleSuccess.style.display = 'block';
             setTimeout(() => {
                 articleSuccess.style.display = 'none';
@@ -290,9 +314,40 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 
             await renderArticles();
         }
 
+        async function handleEditArticle(id) {
+            editingArticleId = id;
+            try {
+                const docSnap = await getDoc(doc(db, "articles", id));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('article-title').value = data.title;
+                    document.getElementById('article-date').value = data.date;
+                    document.getElementById('article-summary').value = data.summary;
+                    document.getElementById('article-content').value = data.content;
+                    document.getElementById('article-image').value = data.image || '';
+
+                    if (formTitle) formTitle.textContent = 'Edit Article';
+                    if (cancelEditBtn) cancelEditBtn.style.display = 'inline-block';
+
+                    // Scroll to form
+                    articleForm.scrollIntoView({ behavior: 'smooth' });
+                }
+            } catch (e) {
+                console.error("Fetch article for edit failed", e);
+            }
+        }
+
+        function handleCancelEdit() {
+            editingArticleId = null;
+            articleForm.reset();
+            if (formTitle) formTitle.textContent = 'Add New Article';
+            if (cancelEditBtn) cancelEditBtn.style.display = 'none';
+        }
+
         async function handleDeleteArticle(id) {
             if (!confirm('Are you sure you want to delete this article?')) return;
             await deleteArticleFirebase(id);
+            if (editingArticleId === id) handleCancelEdit();
             await renderArticles();
         }
 
@@ -311,18 +366,25 @@ import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 
 
             articlesContainer.innerHTML = articles.map(article => `
                 <div class="article-item">
-                    <div>
-                        <h4>${escapeHtml(article.title)}</h4>
-                        <span>${formatDate(article.date)}</span>
+                    <div style="flex: 1;">
+                        <h4 style="margin-bottom: 5px;">${escapeHtml(article.title)}</h4>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">${formatDate(article.date)}</span>
                     </div>
-                    <button class="delete-btn" onclick="deleteArticle('${article.id}')">
-                        <i class="fa-solid fa-trash"></i> Delete
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="edit-btn" onclick="editArticle('${article.id}')" style="background: var(--primary-purple); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                        </button>
+                        <button class="delete-btn" onclick="deleteArticle('${article.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
 
         window.deleteArticle = handleDeleteArticle;
+        window.editArticle = handleEditArticle;
     }
 
 })();
+
