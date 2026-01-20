@@ -50,6 +50,22 @@
     <section class="section-padding">
         <div class="container">
             <div class="news-grid">
+                <!-- Blog Post: New Permanent Article -->
+                <div class="glass-card" style="padding: 0; overflow: hidden; background: white; position: relative;"
+                    data-event-date="2026-07-20">
+                    <div class="countdown-badge"></div>
+                    <img src="images/event-sports.png" style="width: 100%; height: 200px; object-fit: cover;">
+                    <div style="padding: 25px;">
+                        <span class="text-purple" style="font-size: 0.85rem; font-weight: 600;">July 20, 2026</span>
+                        <h3 style="margin: 10px 0;">End of Term Celebrations</h3>
+                        <p class="text-muted">A day of joy as we celebrate the achievements of our pupils this term.
+                            Parents are cordially invited.</p>
+                        <a href="#" class="text-purple"
+                            style="font-weight: 600; display: inline-block; margin-top: 15px;">Read More <i
+                                class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
                 <!-- Blog Post 1 -->
                 <div class="glass-card" style="padding: 0; overflow: hidden; background: white; position: relative;"
                     data-event-date="2026-03-15">
@@ -122,13 +138,31 @@
     </footer>
     <script src="js/main.js"></script>
     <script src="js/admin.js"></script>
-    <script>
-        // Render dynamic articles on news page
-        document.addEventListener('DOMContentLoaded', function () {
-            const container = document.getElementById('dynamic-articles');
-            if (!container || !window.crownheightsArticles) return;
+    <script type="module">
+        import { db, collection, getDocs, query, orderBy } from './js/firebase-config.js';
 
-            const articles = window.crownheightsArticles.getAll();
+        // Render dynamic articles on news page
+        document.addEventListener('DOMContentLoaded', async function () {
+            const container = document.getElementById('dynamic-articles');
+            if (!container) return;
+
+            let articles = [];
+
+            // Try Firebase first
+            try {
+                const q = query(collection(db, "articles"), orderBy("date", "desc"));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((doc) => {
+                    articles.push({ id: doc.id, ...doc.data() });
+                });
+            } catch (e) {
+                console.warn("Firebase fetch failed, trying local storage", e);
+                // Fallback to localStorage (compatible with window.crownheightsArticles if it exists)
+                if (window.crownheightsArticles) {
+                    articles = await window.crownheightsArticles.getAll();
+                }
+            }
+
             if (articles.length === 0) return;
 
             let html = '<h2 style="margin-bottom: 25px; color: var(--dark-purple);">Latest Announcements</h2>';
@@ -141,12 +175,15 @@
                         <i class="fa-solid fa-newspaper text-white" style="font-size: 3rem;"></i>
                        </div>`;
 
+                // Safe formatting
+                const dateStr = window.crownheightsArticles ? window.crownheightsArticles.formatDate(article.date) : article.date;
+
                 html += `
-                    <div class="glass-card" style="padding: 0; overflow: hidden; background: white; position: relative;" data-event-date="${article.date}">
+                    <div class="glass-card animate-on-scroll" style="padding: 0; overflow: hidden; background: white; position: relative;" data-event-date="${article.date}">
                         <div class="countdown-badge"></div>
                         ${imageHtml}
                         <div style="padding: 25px;">
-                            <span class="text-purple" style="font-size: 0.85rem; font-weight: 600;">${window.crownheightsArticles.formatDate(article.date)}</span>
+                            <span class="text-purple" style="font-size: 0.85rem; font-weight: 600;">${dateStr}</span>
                             <h3 style="margin: 10px 0;">${article.title}</h3>
                             <p class="text-muted">${article.summary}</p>
                             <a href="article.html?id=${article.id}" class="text-purple" style="font-weight: 600; display: inline-block; margin-top: 15px;">Read More <i class="fa-solid fa-arrow-right"></i></a>
@@ -158,8 +195,17 @@
             html += '</div>';
             container.innerHTML = html;
 
-            // Re-initialize countdowns for new items
+            // Re-initialize countdowns and animations for new items
             if (window.initEventCountdowns) window.initEventCountdowns();
+
+            // Trigger animation observer for new elements
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('in-view');
+                });
+            }, { threshold: 0.1 });
+
+            container.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
         });
     </script>
 </body>

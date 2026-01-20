@@ -101,7 +101,52 @@
     </div>
 
     <script src="js/main.js"></script>
-    <script src="js/admin.js"></script>
+    <script type="module">
+        import { db, collection, getDocs, query, orderBy } from './js/firebase-config.js';
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const container = document.getElementById('dynamic-gallery');
+            if (!container) return;
+
+            let images = [];
+
+            // Try Firebase
+            try {
+                const q = query(collection(db, "gallery"), orderBy("timestamp", "desc"));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((doc) => {
+                    images.push({ id: doc.id, ...doc.data() });
+                });
+            } catch (e) {
+                console.warn("Firebase gallery fetch failed", e);
+                // Fallback to local storage (manual parsing as admin.js might not be exposed as module)
+                try {
+                    images = JSON.parse(localStorage.getItem('crownheights_gallery')) || [];
+                } catch (err) { }
+            }
+
+            if (images.length === 0) return;
+
+            const html = images.map(img => `
+                <div class="gallery-item animate-on-scroll" style="position: relative;">
+                    <img src="${img.src}" alt="Gallery Image">
+                    <div class="gallery-overlay" style="opacity: 0; pointer-events: none;"><i class="fa-solid fa-plus"></i></div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+
+            // Trigger animation observer
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('in-view');
+                });
+            }, { threshold: 0.1 });
+
+            container.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+        });
+    </script>
+    <script src="js/admin.js" type="module"></script>
 </body>
 
 </html>

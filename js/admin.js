@@ -1,7 +1,10 @@
 /**
  * Admin Panel JavaScript
- * Handles authentication and article CRUD operations using localStorage
+ * Handles authentication and article CRUD operations using Firebase Firestore
+ * Fallback to localStorage provided for offline development
  */
+
+import { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from './firebase-config.js';
 
 (function () {
     'use strict';
@@ -12,8 +15,29 @@
     const GALLERY_KEY = 'crownheights_gallery';
     const SESSION_KEY = 'crownheights_admin_session';
 
-    // Shared Helper functions
-    function getArticles() {
+    // --- Firebase / Storage Helper functions ---
+
+    // Check if Firebase is configured (not using placeholder keys)
+    function isFirebaseConfigured() {
+        return !window.location.protocol.includes('file') && !window.firebaseConfig?.apiKey?.includes('YOUR_');
+    }
+
+    async function getArticles() {
+        try {
+            // Attempt Firebase first
+            const q = query(collection(db, "articles"), orderBy("date", "desc"));
+            const querySnapshot = await getDocs(q);
+            const firebaseArticles = [];
+            querySnapshot.forEach((doc) => {
+                firebaseArticles.push({ id: doc.id, ...doc.data() });
+            });
+
+            if (firebaseArticles.length > 0) return firebaseArticles;
+        } catch (e) {
+            console.warn("Firebase fetch failed, falling back to localStorage", e);
+        }
+
+        // Fallback to localStorage
         try {
             return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
         } catch (e) {
@@ -21,7 +45,19 @@
         }
     }
 
-    function getGallery() {
+    async function getGallery() {
+        try {
+            const q = query(collection(db, "gallery"), orderBy("timestamp", "desc"));
+            const querySnapshot = await getDocs(q);
+            const firebaseImages = [];
+            querySnapshot.forEach((doc) => {
+                firebaseImages.push({ id: doc.id, ...doc.data() });
+            });
+            if (firebaseImages.length > 0) return firebaseImages;
+        } catch (e) {
+            console.warn("Firebase gallery fetch failed", e);
+        }
+
         try {
             return JSON.parse(localStorage.getItem(GALLERY_KEY)) || [];
         } catch (e) {
@@ -29,15 +65,54 @@
         }
     }
 
-    function saveGallery(images) {
-        localStorage.setItem(GALLERY_KEY, JSON.stringify(images));
+    async function saveGalleryImage(imgData) {
+        try {
+            const newImg = {
+                src: imgData,
+                timestamp: new Date().toISOString()
+            };
+            await addDoc(collection(db, "gallery"), newImg);
+        } catch (e) {
+            console.error("Firebase save failed", e);
+            // Fallback to local
+            const images = JSON.parse(localStorage.getItem(GALLERY_KEY)) || [];
+            images.push({ id: Date.now().toString(), src: imgData, timestamp: new Date().toISOString() });
+            localStorage.setItem(GALLERY_KEY, JSON.stringify(images));
+        }
     }
 
-    function saveArticles(articles) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
+    async function deleteGalleryImage(id) {
+        try {
+            await deleteDoc(doc(db, "gallery", id));
+        } catch (e) {
+            // Fallback local delete
+            const images = (JSON.parse(localStorage.getItem(GALLERY_KEY)) || []).filter(img => img.id !== id);
+            localStorage.setItem(GALLERY_KEY, JSON.stringify(images));
+        }
+    }
+
+    async function saveArticle(article) {
+        try {
+            await addDoc(collection(db, "articles"), article);
+        } catch (e) {
+            console.error("Firebase article save failed", e);
+            const articles = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            articles.unshift({ ...article, id: Date.now().toString() });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
+        }
+    }
+
+    async function deleteArticleFirebase(id) {
+        try {
+            await deleteDoc(doc(db, "articles", id));
+        } catch (e) {
+            const articles = (JSON.parse(localStorage.getItem(STORAGE_KEY)) || []).filter(a => a.id !== id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
+        }
     }
 
     function formatDate(dateString) {
+        if (!dateString) return 'Date unknown';
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         return new Date(dateString).toLocaleDateString('en-US', options);
     }
@@ -55,7 +130,7 @@
     };
 
     // --- Gallery Logic ---
-    function initGalleryAdmin() {
+    async function initGalleryAdmin() {
         const trigger = document.getElementById('add-image-trigger');
         const fileInput = document.getElementById('gallery-file-input');
         const container = document.getElementById('dynamic-gallery');
@@ -63,7 +138,7 @@
         if (!trigger || !fileInput || !container) return;
 
         // Initial render
-        renderGallery();
+        await renderGallery();
 
         trigger.addEventListener('click', () => {
             const password = prompt("Admin access required. Please enter password:");
@@ -78,29 +153,22 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            // Optional: Limit file size to prevent localStorage overflow (~2MB limit per image)
-            if (file.size > 2 * 1024 * 1024) {
-                alert("File is too large! Please use images smaller than 2MB.");
+            if (file.size > 1 * 1024 * 1024) {
+                alert("File is too large! Please use images smaller than 1MB to save database space.");
                 return;
             }
 
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 const imageData = event.target.result;
-                const images = getGallery();
-                images.push({
-                    id: Date.now().toString(),
-                    src: imageData,
-                    timestamp: new Date().toISOString()
-                });
-                saveGallery(images);
-                renderGallery();
+                await saveGalleryImage(imageData);
+                await renderGallery();
             };
             reader.readAsDataURL(file);
         });
 
-        function renderGallery() {
-            const images = getGallery();
+        async function renderGallery() {
+            const images = await getGallery();
             container.innerHTML = images.map(img => `
                 <div class="gallery-item animate-on-scroll in-view" style="position: relative;">
                     <img src="${img.src}" alt="Gallery Image">
@@ -115,12 +183,11 @@
 
         // Global delete access
         window.crownheightsGallery = {
-            delete: (id) => {
+            delete: async (id) => {
                 const password = prompt("Confirm deletion. Enter admin password:");
                 if (password === ADMIN_PASSWORD) {
-                    const images = getGallery().filter(img => img.id !== id);
-                    saveGallery(images);
-                    renderGallery();
+                    await deleteGalleryImage(id);
+                    await renderGallery();
                 } else if (password !== null) {
                     alert("Incorrect password!");
                 }
@@ -128,14 +195,17 @@
         };
     }
 
-    // Call gallery init if elements exist
-    document.addEventListener('DOMContentLoaded', initGalleryAdmin);
+    // Call gallery init
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initGalleryAdmin);
+    } else {
+        initGalleryAdmin();
+    }
 
     // --- Admin Panel Page Initialization ---
     const loginForm = document.getElementById('login-form');
     const adminPanel = document.getElementById('admin-panel');
 
-    // Only run admin-specific code if we are on the admin page
     if (loginForm && adminPanel) {
         initAdmin();
     }
@@ -149,12 +219,10 @@
         const articleSuccess = document.getElementById('article-success');
         const articlesContainer = document.getElementById('articles-container');
 
-        // Check if already logged in
         if (sessionStorage.getItem(SESSION_KEY) === 'true') {
             showAdminPanel();
         }
 
-        // Event Listeners
         loginBtn.addEventListener('click', handleLogin);
         passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
@@ -162,12 +230,8 @@
         logoutBtn.addEventListener('click', handleLogout);
         articleForm.addEventListener('submit', handleAddArticle);
 
-        // Load existing articles
-        renderArticles();
-
-        function handleLogin() {
+        async function handleLogin() {
             const password = passwordInput.value.trim();
-
             if (password === ADMIN_PASSWORD) {
                 sessionStorage.setItem(SESSION_KEY, 'true');
                 loginError.style.display = 'none';
@@ -186,13 +250,13 @@
             passwordInput.value = '';
         }
 
-        function showAdminPanel() {
+        async function showAdminPanel() {
             loginForm.style.display = 'none';
             adminPanel.style.display = 'block';
-            renderArticles();
+            await renderArticles();
         }
 
-        function handleAddArticle(e) {
+        async function handleAddArticle(e) {
             e.preventDefault();
 
             const title = document.getElementById('article-title').value.trim();
@@ -207,7 +271,6 @@
             }
 
             const article = {
-                id: Date.now().toString(),
                 title,
                 date,
                 summary,
@@ -216,59 +279,49 @@
                 createdAt: new Date().toISOString()
             };
 
-            // Save to localStorage
-            const articles = getArticles();
-            articles.unshift(article);
-            saveArticles(articles);
+            await saveArticle(article);
 
-            // Reset form
             articleForm.reset();
-
-            // Show success message
             articleSuccess.style.display = 'block';
             setTimeout(() => {
                 articleSuccess.style.display = 'none';
             }, 3000);
 
-            // Re-render articles list
-            renderArticles();
+            await renderArticles();
         }
 
-        function handleDeleteArticle(id) {
+        async function handleDeleteArticle(id) {
             if (!confirm('Are you sure you want to delete this article?')) return;
-
-            const articles = getArticles().filter(a => a.id !== id);
-            saveArticles(articles);
-            renderArticles();
+            await deleteArticleFirebase(id);
+            await renderArticles();
         }
 
-        function renderArticles() {
-            const articles = getArticles();
+        async function renderArticles() {
+            const articles = await getArticles();
 
             if (articles.length === 0) {
                 articlesContainer.innerHTML = `
-                <div class="no-articles">
-                    <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
-                    <p>No custom articles yet. Add your first article above!</p>
-                </div>
-            `;
+                    <div class="no-articles">
+                        <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <p>No announcements yet. Add your first one above!</p>
+                    </div>
+                `;
                 return;
             }
 
             articlesContainer.innerHTML = articles.map(article => `
-            <div class="article-item">
-                <div>
-                    <h4>${escapeHtml(article.title)}</h4>
-                    <span>${formatDate(article.date)}</span>
+                <div class="article-item">
+                    <div>
+                        <h4>${escapeHtml(article.title)}</h4>
+                        <span>${formatDate(article.date)}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteArticle('${article.id}')">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
                 </div>
-                <button class="delete-btn" onclick="deleteArticle('${article.id}')">
-                    <i class="fa-solid fa-trash"></i> Delete
-                </button>
-            </div>
-        `).join('');
+            `).join('');
         }
 
-        // Expose delete function globally for onclick handlers
         window.deleteArticle = handleDeleteArticle;
     }
 
